@@ -55,17 +55,17 @@
 
 
             <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+            <li class="nav-item active">
+                <a class="nav-link" href="../index.php" data-toggle="collapse" data-target="#collapseTwo"
                     aria-expanded="true" aria-controls="collapseTwo">
                     <i class="fas fa-fw fa-cog"></i>
                     <span>Bank Data</span>
                 </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" href="siswa.php">Siswa</a>
-                        <a class="collapse-item" href="cards.html">Kelas</a>
-                        <a class="collapse-item" href="cards.html">Jurusan</a>
+                        <a class="collapse-item active" href="siswa.php">Siswa</a>
+                        <a class="collapse-item" href="kelas.php">Kelas</a>
+                        <a class="collapse-item" href="jurusan.php">Jurusan</a>
                     </div>
                 </div>
             </li>

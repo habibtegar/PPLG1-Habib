@@ -1,22 +1,10 @@
 <?php
 include '../db.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nama = $_POST['nama'];
-    $nisn = $_POST['nisn'];
-    $email = $_POST['email'];
-    $jk = $_POST['jk'];
-
-    $query = "INSERT INTO siswa (nama, nisn, email, jk)
-    VALUES ('$nama', '$nisn', '$email', '$jk')";
-    $result = mysqli_query($koneksi, $query);
-
-
-    if ($result) {
-        echo "<script>alert('Data Siswa Berhasil Ditambahkan'); window.location='siswa.php';</script>";
-    } else {
-        echo "<script>alert('Data Siswa Gagal Ditambahkan'); window.location='tambahsiswa.php';</script>";
-    }
+$data = mysqli_query($koneksi, "SELECT * FROM kelas");
+$kelas = [];
+while ($row = mysqli_fetch_array($data)) {
+    $kelas[] = $row;
 }
 ?>
 
@@ -28,8 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
 
     <title>PHP CRUD - PPLG1</title>
 
@@ -75,18 +61,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             <!-- Heading -->
 
-
             <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+            <li class="nav-item active">
+                <a class="nav-link" href="#" data-toggle="collapse" data-target="#collapseTwo"
                     aria-expanded="true" aria-controls="collapseTwo">
                     <i class="fas fa-fw fa-cog"></i>
                     <span>Bank Data</span>
                 </a>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item" href="siswa.php">Siswa</a>
-                        <a class="collapse-item" href="kelas.php">Kelas</a>
+                        <a class="collapse-item active" href="kelas.php">Kelas</a>
                         <a class="collapse-item" href="jurusan.php">Jurusan</a>
                     </div>
                 </div>
@@ -103,24 +88,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Custom Utilities:</h6>
-                        <a class="collapse-item" href="utilities-color.html">Siswa</a>
-                        <a class="collapse-item" href="utilities-border.html">Kelas</a>
-                        <a class="collapse-item" href="utilities-animation.html">Jurusan</a>
+                        <a class="collapse-item" href="#">Siswa</a>
+                        <a class="collapse-item" href="#">Kelas</a>
+                        <a class="collapse-item" href="#">Jurusan</a>
                     </div>
                 </div>
             </li>
 
-
-
-            <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">
 
-            <!-- Sidebar Toggler (Sidebar) -->
             <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
             </div>
 
         </ul>
+
         <!-- End of Sidebar -->
 
         <!-- Content Wrapper -->
@@ -136,18 +118,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
                         <i class="fa fa-bars"></i>
                     </button>
-                    
 
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
 
-                        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
                         <li class="nav-item dropdown no-arrow d-sm-none">
                             <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-search fa-fw"></i>
                             </a>
-                            <!-- Dropdown - Messages -->
                             <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
                                 aria-labelledby="searchDropdown">
                                 <form class="form-inline mr-auto w-100 navbar-search">
@@ -165,25 +144,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </div>
                         </li>
 
-                        <!-- Nav Item - Alerts -->
-                        
-
-                        
-
                         <div class="topbar-divider d-none d-sm-block"></div>
 
-                        <!-- Nav Item - User Information -->
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">Admin</span>
-                                <img class="img-profile rounded-circle"
-                                    src="img/undraw_profile.svg">
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
                             </a>
-                            <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
-                                
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -197,55 +167,56 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </nav>
                 <!-- End of Topbar -->
 
-                <!-- Begin Page Content -->
                 <div class="container-fluid">
-                    <h1 class="h3 mb-4 text-gray-800">Tambah Data Siswa</h1>
-
+                    <h1 class="h3 mb-4 text-gray-800">Data Kelas</h1>
                     <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <a href="tambahkelas.php" class="btn btn-primary">Tambah Data</a>
+                        </div>
                         <div class="card-body">
-                            <form method="POST">
-                                <div class="form-group">
-                                    <label for="nama" class="form-label">Nama Siswa</label>
-                                    <input type="text" id="nama" name="nama" class="form-control" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="nisn" class="form-label">NISN</label>
-                                    <input type="text" id="nisn" name="nisn" class="form-control" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" id="email" name="email" class="form-control" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="jk" class="form-label">Jenis Kelamin</label>
-                                    <select id="jk" name="jk" class="form-control" required>
-                                        <option value="">-- Pilih Jenis Kelamin --</option>
-                                        <option value="Laki-laki">Laki-laki</option>
-                                        <option value="Perempuan">Perempuan</option>
-                                    </select>
-                                </div>
-                                <br>
-                                <button type="submit" class="btn btn-primary">Simpan Data Siswa</button>
-                                <a href="siswa.php" class="btn btn-secondary">Batal</a>
-                            </form>
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Nama Kelas</th>
+                                            <th>Jurusan</th>
+                                            <th>Wali Kelas</th>
+                                            <th>Ruangan</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($kelas as $i => $k): ?>
+                                            <tr>
+                                                <td><?= $i + 1 ?></td>
+                                                <td><?= htmlspecialchars($k['nama']) ?></td>
+                                                <td><?= htmlspecialchars($k['jurusan']) ?></td>
+                                                <td><?= htmlspecialchars($k['wali_kelas']) ?></td>
+                                                <td><?= htmlspecialchars($k['ruangan']) ?></td>
+                                                <td>
+                                                    <a href="editkelas.php" class="btn btn-success btn-sm"><i class="fa fa-edit"></i></a>
+                                                    <button class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-
                 </div>
-                <!-- /.container-fluid -->
 
             </div>
             <!-- End of Main Content -->
 
-            <!-- Footer -->
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; PPLG 1 - SMKN 1 Ciomas</span>
+                        <span>Copyright &copy; PPLG 1 - SMKN 1 CIOMAS</span>
                     </div>
                 </div>
             </footer>
-            <!-- End of Footer -->
 
         </div>
         <!-- End of Content Wrapper -->
@@ -253,7 +224,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
     <!-- End of Page Wrapper -->
 
-    <!-- Scroll to Top Button-->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
@@ -278,16 +248,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
-    <!-- Bootstrap core JavaScript-->
     <script src="../vendor/jquery/jquery.min.js"></script>
     <script src="../vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Core plugin JavaScript-->
     <script src="../vendor/jquery-easing/jquery.easing.min.js"></script>
-
-    <!-- Custom scripts for all pages-->
     <script src="../js/sb-admin-2.min.js"></script>
 
 </body>
 
 </html>
+
