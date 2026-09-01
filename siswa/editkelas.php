@@ -1,19 +1,58 @@
 <?php
 include '../db.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nama  = mysqli_real_escape_string($koneksi, trim($_POST['nama']));
-    $kode  = mysqli_real_escape_string($koneksi, trim($_POST['kode']));
-    $ketua = mysqli_real_escape_string($koneksi, trim($_POST['ketua']));
+$id_param = isset($_GET['id']) ? mysqli_real_escape_string($koneksi, trim($_GET['id'])) : '';
+if (empty($id_param)) {
+    header('Location: kelas.php');
+    exit;
+}
 
-    $query  = "INSERT INTO jurusan (nama, kode, ketua) VALUES ('$nama', '$kode', '$ketua')";
-    $result = mysqli_query($koneksi, $query);
+// Deteksi kolom kunci pada tabel kelas
+$col_check = mysqli_query($koneksi, "SHOW COLUMNS FROM kelas");
+$columns = [];
+if ($col_check) {
+    while ($c = mysqli_fetch_assoc($col_check)) {
+        $columns[] = $c['Field'];
+    }
+}
+
+$pk_col = 'id';
+if (in_array('id', $columns)) {
+    $pk_col = 'id';
+} elseif (in_array('id_kelas', $columns)) {
+    $pk_col = 'id_kelas';
+} elseif (in_array('nama', $columns)) {
+    $pk_col = 'nama';
+} elseif (!empty($columns)) {
+    $pk_col = $columns[0];
+}
+
+$where_clause = "$pk_col = '$id_param'";
+$query = mysqli_query($koneksi, "SELECT * FROM kelas WHERE $where_clause");
+$kelas = $query ? mysqli_fetch_assoc($query) : null;
+
+if (!$kelas) {
+    header('Location: kelas.php');
+    exit;
+}
+
+// Ambil data jurusan dinamis dari database
+$list_jurusan = mysqli_query($koneksi, "SELECT * FROM jurusan ORDER BY nama ASC");
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $nama       = mysqli_real_escape_string($koneksi, trim($_POST['nama']));
+    $jurusan    = mysqli_real_escape_string($koneksi, trim($_POST['jurusan']));
+    $wali_kelas = mysqli_real_escape_string($koneksi, trim($_POST['wali_kelas']));
+    $ruangan    = mysqli_real_escape_string($koneksi, trim($_POST['ruangan']));
+
+    $update_query = "UPDATE kelas SET nama='$nama', jurusan='$jurusan', wali_kelas='$wali_kelas', ruangan='$ruangan' WHERE $where_clause";
+    $result = mysqli_query($koneksi, $update_query);
 
     if ($result) {
-        header("Location: jurusan.php?status=added&nama=" . urlencode($nama));
+        header("Location: kelas.php?status=updated&nama=" . urlencode($nama));
         exit;
     } else {
-        $error_message = "Gagal menambahkan data jurusan: " . mysqli_error($koneksi);
+        $error_message = "Gagal memperbarui data kelas: " . mysqli_error($koneksi);
     }
 }
 ?>
@@ -24,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Tambah Jurusan Baru - PPLG 1</title>
+    <title>Edit Data Kelas - PPLG 1</title>
 
     <!-- Fonts & Icons -->
     <link href="../vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -62,8 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                     <a class="collapse-item" href="siswa.php"><i class="fas fa-user-graduate mr-2 text-primary"></i>Data Siswa</a>
-                    <a class="collapse-item" href="kelas.php"><i class="fas fa-chalkboard-teacher mr-2 text-success"></i>Data Kelas</a>
-                    <a class="collapse-item active" href="jurusan.php"><i class="fas fa-school mr-2 text-info"></i>Data Jurusan</a>
+                    <a class="collapse-item active" href="kelas.php"><i class="fas fa-chalkboard-teacher mr-2 text-success"></i>Data Kelas</a>
+                    <a class="collapse-item" href="jurusan.php"><i class="fas fa-school mr-2 text-info"></i>Data Jurusan</a>
                 </div>
             </div>
         </li>
@@ -84,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </button>
                 <div class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100">
                     <span class="text-gray-700 font-weight-bold">
-                        <i class="fas fa-folder-plus text-info mr-2"></i>Registrasi Program Keahlian Baru
+                        <i class="fas fa-edit text-success mr-2"></i>Edit Informasi Kelas
                     </span>
                 </div>
                 <ul class="navbar-nav ml-auto">
@@ -102,13 +141,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="container-fluid">
                 
                 <div class="mb-4">
-                    <a href="jurusan.php" class="btn btn-sm btn-secondary mb-3">
-                        <i class="fas fa-arrow-left mr-1"></i> Kembali ke Daftar Jurusan
+                    <a href="kelas.php" class="btn btn-sm btn-secondary mb-3">
+                        <i class="fas fa-arrow-left mr-1"></i> Kembali ke Daftar Kelas
                     </a>
                     <h1 class="h3 mb-0 text-gray-800">
-                        <i class="fas fa-plus-circle mr-2 text-info"></i>Tambah Jurusan Baru
+                        <i class="fas fa-edit mr-2 text-success"></i>Edit Data Kelas
                     </h1>
-                    <p class="page-subtitle">Daftarkan program keahlian / konsentrasi baru ke dalam sistem</p>
+                    <p class="page-subtitle">Perbarui data rombel kelas, jurusan, wali kelas dan ruangan</p>
                 </div>
 
                 <?php if (isset($error_message)): ?>
@@ -124,43 +163,73 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div class="col-lg-8">
                         <div class="card shadow mb-4">
                             <div class="card-header py-3">
-                                <span class="font-weight-bold text-info">
-                                    <i class="fas fa-graduation-cap mr-2"></i>Formulir Data Jurusan Baru
+                                <span class="font-weight-bold text-success">
+                                    <i class="fas fa-chalkboard mr-2"></i>Formulir Edit Kelas: <u><?= htmlspecialchars($kelas['nama']) ?></u>
                                 </span>
                             </div>
                             <div class="card-body p-4">
                                 <form method="POST" action="">
                                     <div class="form-group mb-3">
                                         <label for="nama">
-                                            <i class="fas fa-book-reader text-info mr-1"></i> Nama Program Keahlian / Jurusan <span class="text-danger">*</span>
+                                            <i class="fas fa-door-open text-success mr-1"></i> Nama Kelas <span class="text-danger">*</span>
                                         </label>
-                                        <input type="text" id="nama" name="nama" class="form-control" placeholder="Contoh: Pengembangan Perangkat Lunak dan Gim" required>
+                                        <input type="text" id="nama" name="nama" class="form-control"
+                                               value="<?= htmlspecialchars($kelas['nama']) ?>" placeholder="Contoh: XII PPLG 1" required>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label for="jurusan">
+                                            <i class="fas fa-graduation-cap text-success mr-1"></i> Program Keahlian / Jurusan <span class="text-danger">*</span>
+                                        </label>
+                                        <select id="jurusan" name="jurusan" class="form-control" required>
+                                            <option value="">-- Pilih Jurusan --</option>
+                                            <?php 
+                                            $has_options = false;
+                                            if ($list_jurusan && mysqli_num_rows($list_jurusan) > 0) {
+                                                while ($j = mysqli_fetch_array($list_jurusan)) {
+                                                    $has_options = true;
+                                                    $selected = ($kelas['jurusan'] == $j['kode'] || $kelas['jurusan'] == $j['nama']) ? 'selected' : '';
+                                            ?>
+                                                    <option value="<?= htmlspecialchars($j['kode']) ?>" <?= $selected ?>>
+                                                        <?= htmlspecialchars($j['kode']) ?> - <?= htmlspecialchars($j['nama']) ?>
+                                                    </option>
+                                            <?php 
+                                                }
+                                            }
+                                            if (!$has_options) {
+                                            ?>
+                                                <option value="RPL" <?= ($kelas['jurusan'] == 'RPL') ? 'selected' : '' ?>>RPL (Rekayasa Perangkat Lunak)</option>
+                                                <option value="TKJ" <?= ($kelas['jurusan'] == 'TKJ') ? 'selected' : '' ?>>TKJ (Teknik Komputer Jaringan)</option>
+                                            <?php } ?>
+                                        </select>
                                     </div>
 
                                     <div class="row">
-                                        <div class="col-md-5 form-group mb-3">
-                                            <label for="kode">
-                                                <i class="fas fa-tag text-info mr-1"></i> Kode Singkatan <span class="text-danger">*</span>
+                                        <div class="col-md-6 form-group mb-3">
+                                            <label for="wali_kelas">
+                                                <i class="fas fa-user-tie text-success mr-1"></i> Nama Wali Kelas <span class="text-danger">*</span>
                                             </label>
-                                            <input type="text" id="kode" name="kode" class="form-control" placeholder="Contoh: PPLG / TKJ" required>
+                                            <input type="text" id="wali_kelas" name="wali_kelas" class="form-control"
+                                                   value="<?= htmlspecialchars($kelas['wali_kelas']) ?>" placeholder="Nama Guru Wali Kelas" required>
                                         </div>
 
-                                        <div class="col-md-7 form-group mb-3">
-                                            <label for="ketua">
-                                                <i class="fas fa-user-tie text-info mr-1"></i> Ketua Jurusan / Kaprodi <span class="text-danger">*</span>
+                                        <div class="col-md-6 form-group mb-3">
+                                            <label for="ruangan">
+                                                <i class="fas fa-map-marker-alt text-success mr-1"></i> Ruangan / Lab <span class="text-danger">*</span>
                                             </label>
-                                            <input type="text" id="ketua" name="ketua" class="form-control" placeholder="Nama Kepala Program Keahlian" required>
+                                            <input type="text" id="ruangan" name="ruangan" class="form-control"
+                                                   value="<?= htmlspecialchars($kelas['ruangan']) ?>" placeholder="Contoh: Lab RPL 2 / Ruang 102" required>
                                         </div>
                                     </div>
 
                                     <hr class="my-4">
 
                                     <div class="d-flex align-items-center justify-content-end gap-2">
-                                        <a href="jurusan.php" class="btn btn-secondary mr-2">
+                                        <a href="kelas.php" class="btn btn-secondary mr-2">
                                             <i class="fas fa-times mr-1"></i> Batal
                                         </a>
-                                        <button type="submit" class="btn btn-info px-4">
-                                            <i class="fas fa-check mr-1"></i> Simpan Data Jurusan
+                                        <button type="submit" class="btn btn-success px-4">
+                                            <i class="fas fa-save mr-1"></i> Simpan Perubahan
                                         </button>
                                     </div>
                                 </form>
