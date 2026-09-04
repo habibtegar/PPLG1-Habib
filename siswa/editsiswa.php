@@ -37,14 +37,18 @@ if (!$siswa) {
     exit;
 }
 
+// Ambil daftar kelas untuk dropdown
+$daftar_kelas = mysqli_query($koneksi, "SELECT * FROM kelas ORDER BY nama ASC");
+
 // Handle UPDATE POST
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nama  = mysqli_real_escape_string($koneksi, trim($_POST['nama']));
     $nisn  = mysqli_real_escape_string($koneksi, trim($_POST['nisn']));
     $email = mysqli_real_escape_string($koneksi, trim($_POST['email']));
     $jk    = mysqli_real_escape_string($koneksi, trim($_POST['jk']));
+    $kelas = mysqli_real_escape_string($koneksi, trim($_POST['kelas']));
 
-    $update_query = "UPDATE siswa SET nama='$nama', nisn='$nisn', email='$email', jk='$jk' WHERE $where_clause";
+    $update_query = "UPDATE siswa SET nama='$nama', nisn='$nisn', email='$email', jk='$jk', kelas='$kelas' WHERE $where_clause";
     $result = mysqli_query($koneksi, $update_query);
 
     if ($result) {
@@ -194,15 +198,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         </div>
                                     </div>
 
-                                    <div class="form-group mb-4">
-                                        <label for="jk">
-                                            <i class="fas fa-venus-mars text-primary mr-1"></i> Jenis Kelamin <span class="text-danger">*</span>
-                                        </label>
-                                        <select id="jk" name="jk" class="form-control" required>
-                                            <option value="">-- Pilih Jenis Kelamin --</option>
-                                            <option value="Laki-laki" <?= ($siswa['jk'] == 'Laki-laki' || $siswa['jk'] == 'L') ? 'selected' : '' ?>>Laki-laki</option>
-                                            <option value="Perempuan" <?= ($siswa['jk'] == 'Perempuan' || $siswa['jk'] == 'P') ? 'selected' : '' ?>>Perempuan</option>
-                                        </select>
+                                    <div class="row">
+                                        <div class="col-md-6 form-group mb-4">
+                                            <label for="jk">
+                                                <i class="fas fa-venus-mars text-primary mr-1"></i> Jenis Kelamin <span class="text-danger">*</span>
+                                            </label>
+                                            <select id="jk" name="jk" class="form-control" required>
+                                                <option value="">-- Pilih Jenis Kelamin --</option>
+                                                <option value="Laki-laki" <?= ($siswa['jk'] == 'Laki-laki' || $siswa['jk'] == 'L') ? 'selected' : '' ?>>Laki-laki</option>
+                                                <option value="Perempuan" <?= ($siswa['jk'] == 'Perempuan' || $siswa['jk'] == 'P') ? 'selected' : '' ?>>Perempuan</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6 form-group mb-4">
+                                            <label for="kelas">
+                                                <i class="fas fa-chalkboard-teacher text-primary mr-1"></i> Pilihan Kelas <span class="text-danger">*</span>
+                                            </label>
+                                            <select id="kelas" name="kelas" class="form-control" required>
+                                                <option value="">-- Pilih Kelas --</option>
+                                                <?php
+                                                $current_kelas = isset($siswa['kelas']) ? $siswa['kelas'] : '';
+                                                if ($daftar_kelas && mysqli_num_rows($daftar_kelas) > 0) {
+                                                    while ($k = mysqli_fetch_array($daftar_kelas)) {
+                                                        $selected = ($current_kelas == $k['nama']) ? 'selected' : '';
+                                                        echo '<option value="' . htmlspecialchars($k['nama']) . '" ' . $selected . '>' . htmlspecialchars($k['nama']) . ' (' . htmlspecialchars($k['jurusan']) . ')</option>';
+                                                    }
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <hr class="my-4">

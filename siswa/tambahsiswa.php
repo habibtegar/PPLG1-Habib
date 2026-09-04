@@ -1,13 +1,17 @@
 <?php
 include '../db.php';
 
+// Ambil daftar kelas untuk dropdown
+$daftar_kelas = mysqli_query($koneksi, "SELECT * FROM kelas ORDER BY nama ASC");
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nama  = mysqli_real_escape_string($koneksi, trim($_POST['nama']));
     $nisn  = mysqli_real_escape_string($koneksi, trim($_POST['nisn']));
     $email = mysqli_real_escape_string($koneksi, trim($_POST['email']));
     $jk    = mysqli_real_escape_string($koneksi, trim($_POST['jk']));
+    $kelas = mysqli_real_escape_string($koneksi, trim($_POST['kelas']));
 
-    $query  = "INSERT INTO siswa (nama, nisn, email, jk) VALUES ('$nama', '$nisn', '$email', '$jk')";
+    $query  = "INSERT INTO siswa (nama, nisn, email, jk, kelas) VALUES ('$nama', '$nisn', '$email', '$jk', '$kelas')";
     $result = mysqli_query($koneksi, $query);
 
     if ($result) {
@@ -154,15 +158,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         </div>
                                     </div>
 
-                                    <div class="form-group mb-4">
-                                        <label for="jk">
-                                            <i class="fas fa-venus-mars text-primary mr-1"></i> Jenis Kelamin <span class="text-danger">*</span>
-                                        </label>
-                                        <select id="jk" name="jk" class="form-control" required>
-                                            <option value="">-- Pilih Jenis Kelamin --</option>
-                                            <option value="Laki-laki">Laki-laki</option>
-                                            <option value="Perempuan">Perempuan</option>
-                                        </select>
+                                    <div class="row">
+                                        <div class="col-md-6 form-group mb-4">
+                                            <label for="jk">
+                                                <i class="fas fa-venus-mars text-primary mr-1"></i> Jenis Kelamin <span class="text-danger">*</span>
+                                            </label>
+                                            <select id="jk" name="jk" class="form-control" required>
+                                                <option value="">-- Pilih Jenis Kelamin --</option>
+                                                <option value="Laki-laki">Laki-laki</option>
+                                                <option value="Perempuan">Perempuan</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6 form-group mb-4">
+                                            <label for="kelas">
+                                                <i class="fas fa-chalkboard-teacher text-primary mr-1"></i> Pilihan Kelas <span class="text-danger">*</span>
+                                            </label>
+                                            <select id="kelas" name="kelas" class="form-control" required>
+                                                <option value="">-- Pilih Kelas --</option>
+                                                <?php
+                                                if ($daftar_kelas && mysqli_num_rows($daftar_kelas) > 0) {
+                                                    while ($k = mysqli_fetch_array($daftar_kelas)) {
+                                                        echo '<option value="' . htmlspecialchars($k['nama']) . '">' . htmlspecialchars($k['nama']) . ' (' . htmlspecialchars($k['jurusan']) . ')</option>';
+                                                    }
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <hr class="my-4">

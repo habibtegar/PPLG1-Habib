@@ -1,8 +1,13 @@
 <?php
 include '../db.php';
 
-// Ambil data siswa tanpa hardcode kolom order agar kompatibel dengan semua struktur tabel
-$data = mysqli_query($koneksi, "SELECT * FROM siswa");
+// Ambil daftar semua kelas untuk dropdown filter
+$list_kelas = mysqli_query($koneksi, "SELECT * FROM kelas ORDER BY nama ASC");
+
+// Ambil data siswa (dukung filter GET jika ada)
+$filter_kelas = isset($_GET['kelas']) ? mysqli_real_escape_string($koneksi, trim($_GET['kelas'])) : '';
+$where_sql = !empty($filter_kelas) ? "WHERE kelas = '$filter_kelas'" : "";
+$data = mysqli_query($koneksi, "SELECT * FROM siswa $where_sql ORDER BY nama ASC");
 $total_siswa = $data ? mysqli_num_rows($data) : 0;
 ?>
 <!DOCTYPE html>
@@ -164,13 +169,38 @@ $total_siswa = $data ? mysqli_num_rows($data) : 0;
 
                     <!-- Data Table Card -->
                     <div class="card shadow mb-4">
-                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                            <span class="font-weight-bold text-primary">
-                                <i class="fas fa-table mr-2"></i>Tabel Data Siswa 
-                                <span class="badge badge-primary ml-2" style="font-size: 0.8rem; border-radius: 6px;"><?= $total_siswa ?> Siswa</span>
-                            </span>
-                            <div class="form-inline">
-                                <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Cari nama / NISN..." style="width: 200px;">
+                        <div class="card-header py-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                            <div class="mb-2 mb-md-0">
+                                <span class="font-weight-bold text-primary">
+                                    <i class="fas fa-table mr-2"></i>Tabel Data Siswa 
+                                    <span id="badgeTotal" class="badge badge-primary ml-2" style="font-size: 0.82rem; border-radius: 6px;"><?= $total_siswa ?> Siswa</span>
+                                </span>
+                            </div>
+                            <!-- Pilihan Filter Kelas & Pencarian -->
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <div class="input-group input-group-sm mr-2 mb-2 mb-md-0" style="width: auto;">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-light font-weight-bold text-primary border-right-0">
+                                            <i class="fas fa-filter mr-1"></i> Kelas:
+                                        </span>
+                                    </div>
+                                    <select id="filterKelas" class="form-control form-control-sm font-weight-bold text-dark border-left-0" style="min-width: 150px; border-radius: 0 8px 8px 0;">
+                                        <option value="">Semua Kelas</option>
+                                        <?php
+                                        if ($list_kelas && mysqli_num_rows($list_kelas) > 0) {
+                                            mysqli_data_seek($list_kelas, 0);
+                                            while ($k = mysqli_fetch_array($list_kelas)) {
+                                                $selected = ($filter_kelas == $k['nama']) ? 'selected' : '';
+                                                echo '<option value="' . htmlspecialchars($k['nama']) . '" ' . $selected . '>' . htmlspecialchars($k['nama']) . '</option>';
+                                            }
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+
+                                <div class="form-inline mb-2 mb-md-0">
+                                    <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Cari nama / NISN..." style="width: 180px; border-radius: 8px;">
+                                </div>
                             </div>
                         </div>
                         <div class="card-body">
@@ -178,12 +208,13 @@ $total_siswa = $data ? mysqli_num_rows($data) : 0;
                                 <table class="table table-bordered" id="siswaTable" width="100%" cellspacing="0">
                                     <thead>
                                         <tr>
-                                            <th class="text-center" width="60">No</th>
+                                            <th class="text-center" width="50">No</th>
                                             <th>Nama Siswa</th>
                                             <th>NISN</th>
-                                            <th>Email</th>
+                                            <th>Kelas</th>
                                             <th>Jenis Kelamin</th>
-                                            <th class="text-center" width="120">Aksi</th>
+                                            <th>Email</th>
+                                            <th class="text-center" width="110">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -193,15 +224,24 @@ $total_siswa = $data ? mysqli_num_rows($data) : 0;
                                             while ($d = mysqli_fetch_array($data)) {
                                                 // Identifikasi identifier ID secara dinamis
                                                 $id_val = isset($d['id']) ? $d['id'] : (isset($d['id_siswa']) ? $d['id_siswa'] : (isset($d['nisn']) ? $d['nisn'] : ''));
+                                                $kelas_siswa = !empty($d['kelas']) ? $d['kelas'] : '-';
                                         ?>
-                                        <tr>
-                                            <td class="text-center font-weight-bold text-muted"><?= $i++ ?></td>
+                                        <tr class="data-row" data-kelas="<?= htmlspecialchars($kelas_siswa) ?>">
+                                            <td class="text-center font-weight-bold text-muted row-num"><?= $i++ ?></td>
                                             <td class="font-weight-bold text-gray-900">
                                                 <i class="fas fa-user-circle text-gray-400 mr-2"></i>
                                                 <?= htmlspecialchars($d['nama']) ?>
                                             </td>
                                             <td><code><?= htmlspecialchars($d['nisn']) ?></code></td>
-                                            <td><?= htmlspecialchars($d['email']) ?></td>
+                                            <td>
+                                                <?php if ($kelas_siswa != '-'): ?>
+                                                    <span class="badge badge-primary px-3 py-2" style="border-radius: 8px; font-weight: 700; font-size: 0.8rem; background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe;">
+                                                        <i class="fas fa-chalkboard-teacher mr-1"></i> <?= htmlspecialchars($kelas_siswa) ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="badge badge-secondary px-2 py-1" style="border-radius: 6px;">Belum Diatur</span>
+                                                <?php endif; ?>
+                                            </td>
                                             <td>
                                                 <?php if (isset($d['jk']) && ($d['jk'] == 'Laki-laki' || $d['jk'] == 'L')): ?>
                                                     <span class="badge-custom badge-laki"><i class="fas fa-mars"></i> Laki-laki</span>
@@ -209,6 +249,7 @@ $total_siswa = $data ? mysqli_num_rows($data) : 0;
                                                     <span class="badge-custom badge-perempuan"><i class="fas fa-venus"></i> Perempuan</span>
                                                 <?php endif; ?>
                                             </td>
+                                            <td><?= htmlspecialchars($d['email']) ?></td>
                                             <td class="text-center">
                                                 <a href="editsiswa.php?id=<?= urlencode($id_val) ?>" class="btn-action btn-edit" title="Edit Data Siswa">
                                                     <i class="fas fa-edit"></i>
@@ -225,8 +266,8 @@ $total_siswa = $data ? mysqli_num_rows($data) : 0;
                                             }
                                         } else {
                                         ?>
-                                        <tr>
-                                            <td colspan="6" class="text-center py-5 text-muted">
+                                        <tr id="emptyDefaultRow">
+                                            <td colspan="7" class="text-center py-5 text-muted">
                                                 <i class="fas fa-user-slash fa-3x mb-3 d-block text-gray-300"></i>
                                                 Belum ada data siswa yang tersimpan.
                                                 <br>
@@ -236,6 +277,14 @@ $total_siswa = $data ? mysqli_num_rows($data) : 0;
                                             </td>
                                         </tr>
                                         <?php } ?>
+
+                                        <!-- Pesan jika hasil filter pencarian / pilihan kelas kosong -->
+                                        <tr id="emptyFilterRow" style="display: none;">
+                                            <td colspan="7" class="text-center py-5 text-muted">
+                                                <i class="fas fa-search fa-3x mb-3 d-block text-gray-300"></i>
+                                                Tidak ditemukan siswa pada pilihan kelas / kata kunci tersebut.
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -307,13 +356,42 @@ $total_siswa = $data ? mysqli_num_rows($data) : 0;
             $('#deleteModal').modal('show');
         }
 
-        // Live search filter
-        $('#searchInput').on('keyup', function() {
-            var value = $(this).val().toLowerCase();
-            $('#siswaTable tbody tr').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        // Fungsi Filter Gabungan (Pilihan Kelas + Pencarian Nama/NISN)
+        function applyFilters() {
+            var selectedKelas = $('#filterKelas').val().trim().toLowerCase();
+            var searchValue = $('#searchInput').val().trim().toLowerCase();
+            var visibleCount = 0;
+
+            $('#siswaTable tbody tr.data-row').each(function() {
+                var row = $(this);
+                var rowKelas = (row.attr('data-kelas') || '').trim().toLowerCase();
+                var rowText = row.text().toLowerCase();
+
+                var matchKelas = !selectedKelas || (rowKelas === selectedKelas);
+                var matchSearch = !searchValue || (rowText.indexOf(searchValue) > -1);
+
+                if (matchKelas && matchSearch) {
+                    row.show();
+                    visibleCount++;
+                } else {
+                    row.hide();
+                }
             });
-        });
+
+            // Tampilkan pesan kosong jika tidak ada siswa yang cocok
+            if (visibleCount === 0 && $('#siswaTable tbody tr.data-row').length > 0) {
+                $('#emptyFilterRow').show();
+            } else {
+                $('#emptyFilterRow').hide();
+            }
+
+            // Update badge jumlah siswa
+            $('#badgeTotal').text(visibleCount + ' Siswa');
+        }
+
+        // Event listener saat kelas dipilih atau pencarian diketik
+        $('#filterKelas').on('change', applyFilters);
+        $('#searchInput').on('keyup input', applyFilters);
 
         // Auto dismiss toast after 4s
         setTimeout(function() {

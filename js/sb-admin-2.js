@@ -3,25 +3,31 @@
 
   // Toggle the side navigation
   $("#sidebarToggle, #sidebarToggleTop").on('click', function(e) {
+    e.stopPropagation();
     $("body").toggleClass("sidebar-toggled");
     $(".sidebar").toggleClass("toggled");
     if ($(".sidebar").hasClass("toggled")) {
       $('.sidebar .collapse').collapse('hide');
-    };
+    }
+  });
+
+  // Close mobile sidebar when clicking on backdrop / outside
+  $(document).on('click touchstart', function(e) {
+    if ($(window).width() < 768) {
+      if ($("body").hasClass("sidebar-toggled")) {
+        if (!$(e.target).closest('#accordionSidebar, #sidebarToggleTop, #sidebarToggle').length) {
+          $("body").removeClass("sidebar-toggled");
+          $(".sidebar").removeClass("toggled");
+        }
+      }
+    }
   });
 
   // Close any open menu accordions when window is resized below 768px
   $(window).resize(function() {
     if ($(window).width() < 768) {
       $('.sidebar .collapse').collapse('hide');
-    };
-    
-    // Toggle the side navigation when window is resized below 480px
-    if ($(window).width() < 480 && !$(".sidebar").hasClass("toggled")) {
-      $("body").addClass("sidebar-toggled");
-      $(".sidebar").addClass("toggled");
-      $('.sidebar .collapse').collapse('hide');
-    };
+    }
   });
 
   // Prevent the content wrapper from scrolling when the fixed side navigation hovered over

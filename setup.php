@@ -45,6 +45,7 @@ $sql_siswa = "CREATE TABLE IF NOT EXISTS siswa (
   nisn VARCHAR(20) NOT NULL,
   email VARCHAR(100) NOT NULL,
   jk VARCHAR(20) NOT NULL,
+  kelas VARCHAR(100) NOT NULL DEFAULT '',
   PRIMARY KEY (id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4";
 
@@ -95,11 +96,11 @@ $check_siswa = mysqli_query($koneksi, "SELECT COUNT(*) as count FROM siswa");
 $count = mysqli_fetch_array($check_siswa)['count'];
 
 if ($count == 0) {
-    $sql_insert_siswa = "INSERT INTO siswa (nama, nisn, email, jk) VALUES
-    ('Ahmad Rifki', '1234567890', 'ahmad@example.com', 'Laki-laki'),
-    ('Siti Nurhaliza', '1234567891', 'siti@example.com', 'Perempuan'),
-    ('Budi Santoso', '1234567892', 'budi@example.com', 'Laki-laki'),
-    ('Rina Wijaya', '1234567893', 'rina@example.com', 'Perempuan')";
+    $sql_insert_siswa = "INSERT INTO siswa (nama, nisn, email, jk, kelas) VALUES
+    ('Ahmad Rifki', '1234567890', 'ahmad@example.com', 'Laki-laki', 'X RPL 1'),
+    ('Siti Nurhaliza', '1234567891', 'siti@example.com', 'Perempuan', 'X RPL 1'),
+    ('Budi Santoso', '1234567892', 'budi@example.com', 'Laki-laki', 'X TKJ 1'),
+    ('Rina Wijaya', '1234567893', 'rina@example.com', 'Perempuan', 'X TKJ 1')";
     
     if (mysqli_query($koneksi, $sql_insert_siswa)) {
         echo "✓ Data siswa sampel berhasil ditambahkan<br>";

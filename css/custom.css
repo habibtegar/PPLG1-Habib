@@ -479,31 +479,66 @@ h1.h3 {
 
 .sidebar {
     background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%) !important;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Hilangkan rotasi miring pada logo agar tegak lurus & sejajar sempurna */
+.sidebar .sidebar-brand-icon.rotate-n-15,
+.sidebar .rotate-n-15 {
+    transform: none !important;
 }
 
 .sidebar .sidebar-brand {
     height: 4.75rem;
     letter-spacing: 0.05rem;
     font-weight: 800;
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    padding: 0 1rem;
+}
+
+.sidebar .sidebar-brand-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    margin: 0 !important;
+}
+
+.sidebar .sidebar-brand-icon i {
+    font-size: 1.5rem !important;
 }
 
 .sidebar .sidebar-brand:hover {
     transform: scale(1.03);
 }
 
+.sidebar hr.sidebar-divider {
+    margin: 0.6rem 1rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
 .sidebar .nav-item .nav-link {
     font-weight: 600;
-    padding: 14px 18px !important;
+    padding: 12px 16px;
     border-radius: 10px;
     margin: 4px 12px;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
 }
 
 .sidebar .nav-item .nav-link i {
     font-size: 1.05rem;
-    margin-right: 8px;
+    width: 22px;
+    text-align: center;
+    margin-right: 12px;
     transition: transform 0.25s ease;
+    flex-shrink: 0;
 }
 
 .sidebar .nav-item .nav-link:hover {
@@ -514,6 +549,305 @@ h1.h3 {
 
 .sidebar .nav-item .nav-link:hover i {
     transform: scale(1.2);
+}
+
+.sidebar .sidebar-heading {
+    padding: 0.75rem 1.25rem 0.35rem 1.25rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7) !important;
+    transition: all 0.2s ease;
+}
+
+/* ==========================================================================
+   DESKTOP SIDEBAR TOGGLED / COLLAPSED STATE (>= 768px)
+   ========================================================================== */
+
+@media (min-width: 768px) {
+    .sidebar {
+        width: 14rem !important;
+        position: relative !important;
+        transform: none !important;
+    }
+
+    .sidebar.toggled {
+        width: 6.5rem !important;
+        overflow: visible !important;
+    }
+
+    .sidebar.toggled hr.sidebar-divider {
+        margin: 0.6rem 0.8rem !important;
+    }
+
+    /* Logo Brand saat Toggled: Presisi di tengah */
+    .sidebar.toggled .sidebar-brand {
+        padding: 1rem 0 !important;
+        justify-content: center !important;
+    }
+
+    .sidebar.toggled .sidebar-brand .sidebar-brand-icon {
+        margin: 0 auto !important;
+        justify-content: center !important;
+    }
+
+    .sidebar.toggled .sidebar-brand .sidebar-brand-icon i {
+        font-size: 1.6rem !important;
+    }
+
+    /* Tulisan Heading "MANAJEMEN DATA" saat Toggled: Pas di tengah, simetris dan rapi */
+    .sidebar.toggled .sidebar-heading {
+        display: block !important;
+        text-align: center !important;
+        font-size: 0.62rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.04em !important;
+        line-height: 1.25 !important;
+        padding: 0.4rem 4px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        color: rgba(255, 255, 255, 0.75) !important;
+        white-space: normal !important;
+    }
+
+    /* Nav Item saat Toggled: Ikon & Teks sejajar lurus di tengah */
+    .sidebar.toggled .nav-item {
+        width: 100% !important;
+        text-align: center !important;
+    }
+
+    .sidebar.toggled .nav-item .nav-link {
+        width: auto !important;
+        margin: 4px 8px !important;
+        padding: 10px 4px !important;
+        text-align: center !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 10px;
+    }
+
+    .sidebar.toggled .nav-item .nav-link i {
+        margin: 0 auto 5px auto !important;
+        font-size: 1.2rem !important;
+        width: 100% !important;
+        text-align: center !important;
+        display: block !important;
+    }
+
+    .sidebar.toggled .nav-item .nav-link span {
+        font-size: 0.68rem !important;
+        font-weight: 600 !important;
+        display: block !important;
+        text-align: center !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+    }
+
+    /* Efek Hover di mode Toggled */
+    .sidebar.toggled .nav-item .nav-link:hover {
+        transform: translateY(-2px) !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    .sidebar.toggled .nav-item .nav-link:hover i {
+        transform: scale(1.15) !important;
+    }
+
+    /* Flyout / Floating Submenu saat Toggled */
+    .sidebar.toggled .nav-item .collapse {
+        position: absolute !important;
+        left: calc(6.5rem + 8px) !important;
+        top: 0 !important;
+        z-index: 1050 !important;
+        min-width: 13rem !important;
+        margin: 0 !important;
+    }
+
+    .sidebar.toggled .nav-item .collapse .collapse-inner {
+        border-radius: 12px !important;
+        box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+        background: #ffffff !important;
+        padding: 10px !important;
+    }
+
+    .sidebar.toggled .nav-item .collapse-inner .collapse-item {
+        text-align: left !important;
+        padding: 9px 14px !important;
+        font-size: 0.85rem !important;
+        margin: 2px 0 !important;
+    }
+}
+
+/* ==========================================================================
+   MOBILE SIDEBAR (< 768px) - Modern Drawer Slide-In & Full Width Content
+   ========================================================================== */
+
+@media (max-width: 767.98px) {
+    /* Sidebar tertutup secara default pada mobile */
+    .sidebar,
+    .sidebar.toggled {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        width: 260px !important;
+        min-width: 260px !important;
+        max-width: 80vw !important;
+        z-index: 1060 !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: none !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        visibility: visible !important;
+    }
+
+    /* Saat tombol hamburger diklik di mobile (Sidebar Terbuka / Slide-In) */
+    body.sidebar-toggled .sidebar,
+    body.sidebar-toggled .sidebar.toggled {
+        transform: translateX(0) !important;
+        width: 260px !important;
+        min-width: 260px !important;
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5) !important;
+        visibility: visible !important;
+        display: flex !important;
+    }
+
+    /* Backdrop gelap saat sidebar mobile terbuka */
+    body.sidebar-toggled::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(3px);
+        z-index: 1055;
+        pointer-events: auto;
+        animation: fadeIn 0.25s ease;
+    }
+
+    /* Tampilan Header Brand di Mobile */
+    .sidebar .sidebar-brand,
+    .sidebar.toggled .sidebar-brand {
+        height: 4.5rem !important;
+        padding: 1rem 1.25rem !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .sidebar .sidebar-brand .sidebar-brand-text,
+    .sidebar.toggled .sidebar-brand .sidebar-brand-text {
+        display: inline !important;
+        font-size: 0.95rem !important;
+        margin-left: 0.5rem !important;
+    }
+
+    .sidebar .sidebar-brand-icon,
+    .sidebar.toggled .sidebar-brand-icon {
+        margin: 0 !important;
+    }
+
+    /* Tampilan menu di mobile tetap lebar & nyaman dibaca */
+    .sidebar .nav-item,
+    .sidebar.toggled .nav-item {
+        width: 100% !important;
+        text-align: left !important;
+    }
+
+    .sidebar .nav-item .nav-link,
+    .sidebar.toggled .nav-item .nav-link {
+        width: auto !important;
+        padding: 12px 16px !important;
+        margin: 4px 12px !important;
+        flex-direction: row !important;
+        text-align: left !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        border-radius: 10px !important;
+    }
+
+    .sidebar .nav-item .nav-link i,
+    .sidebar.toggled .nav-item .nav-link i {
+        margin: 0 12px 0 0 !important;
+        width: 22px !important;
+        font-size: 1.05rem !important;
+        display: inline-block !important;
+        text-align: center !important;
+    }
+
+    .sidebar .nav-item .nav-link span,
+    .sidebar.toggled .nav-item .nav-link span {
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        display: inline !important;
+        text-align: left !important;
+        line-height: normal !important;
+        width: auto !important;
+    }
+
+    .sidebar .sidebar-heading,
+    .sidebar.toggled .sidebar-heading {
+        display: block !important;
+        text-align: left !important;
+        padding: 0.75rem 1.25rem 0.35rem 1.25rem !important;
+        font-size: 0.72rem !important;
+        width: auto !important;
+    }
+
+    .sidebar .nav-item .collapse,
+    .sidebar.toggled .nav-item .collapse {
+        position: static !important;
+        margin: 0 1rem !important;
+        width: auto !important;
+        box-shadow: none !important;
+    }
+
+    .sidebar .nav-item .collapse .collapse-inner,
+    .sidebar.toggled .nav-item .collapse .collapse-inner {
+        box-shadow: none !important;
+        border-radius: 10px !important;
+        padding: 6px !important;
+    }
+
+    /* Content Wrapper otomatis mengambil 100% layar mobile */
+    #content-wrapper {
+        width: 100% !important;
+        min-width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    /* Sembunyikan tombol toggle desktop di bawah saat di mobile */
+    #sidebarToggle {
+        display: none !important;
+    }
+}
+
+/* Toggler Button Sejajar di Tengah */
+.sidebar #sidebarToggle {
+    margin: 0.5rem auto 1rem auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: rgba(255, 255, 255, 0.18) !important;
+    transition: all 0.3s ease !important;
+}
+
+#sidebarToggle:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    transform: scale(1.1) !important;
 }
 
 .sidebar .collapse-inner {

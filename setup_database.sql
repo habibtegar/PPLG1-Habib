@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS `siswa` (
   `nisn` varchar(20) NOT NULL,
   `email` varchar(100) NOT NULL,
   `jk` varchar(20) NOT NULL,
+  `kelas` varchar(100) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
@@ -49,8 +50,8 @@ INSERT INTO `kelas` (`nama`, `jurusan`, `wali_kelas`, `ruangan`) VALUES
 ('XII TKJ 1', 'TKJ', 'Ibu Lilis', 'Ruang 110');
 
 -- Insert data sampel untuk Siswa
-INSERT INTO `siswa` (`nama`, `nisn`, `email`, `jk`) VALUES
-('Ahmad Rifki', '1234567890', 'ahmad@example.com', 'Laki-laki'),
-('Siti Nurhaliza', '1234567891', 'siti@example.com', 'Perempuan'),
-('Budi Santoso', '1234567892', 'budi@example.com', 'Laki-laki'),
-('Rina Wijaya', '1234567893', 'rina@example.com', 'Perempuan');
+INSERT INTO `siswa` (`nama`, `nisn`, `email`, `jk`, `kelas`) VALUES
+('Ahmad Rifki', '1234567890', 'ahmad@example.com', 'Laki-laki', 'X RPL 1'),
+('Siti Nurhaliza', '1234567891', 'siti@example.com', 'Perempuan', 'X RPL 1'),
+('Budi Santoso', '1234567892', 'budi@example.com', 'Laki-laki', 'X TKJ 1'),
+('Rina Wijaya', '1234567893', 'rina@example.com', 'Perempuan', 'X TKJ 1');

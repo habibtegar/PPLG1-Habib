@@ -20,11 +20,28 @@ if ($q_kelas) {
 $q_jurusan = mysqli_query($koneksi, "SELECT COUNT(*) FROM jurusan");
 if ($q_jurusan) {
     $row = mysqli_fetch_row($q_jurusan);
-    $jumlah_jurusan = $row ? $row[0] : 0;
+    $jumlah_jurusan = $row ? (int)$row[0] : 0;
 }
 
-// Ambil beberapa data siswa untuk preview (tanpa hardcode kolom id)
-$siswa_terbaru = mysqli_query($koneksi, "SELECT * FROM siswa LIMIT 5");
+// Hitung data statistik banyaknya siswa untuk grafik
+$jml_laki = 0;
+$jml_perempuan = 0;
+
+$q_jk = mysqli_query($koneksi, "SELECT jk, COUNT(*) as total FROM siswa GROUP BY jk");
+if ($q_jk) {
+    while ($row_jk = mysqli_fetch_assoc($q_jk)) {
+        $jk_lower = strtolower(trim($row_jk['jk']));
+        if ($jk_lower == 'laki-laki' || $jk_lower == 'l') {
+            $jml_laki += (int)$row_jk['total'];
+        } else if ($jk_lower == 'perempuan' || $jk_lower == 'p') {
+            $jml_perempuan += (int)$row_jk['total'];
+        }
+    }
+}
+
+// Persentase jenis kelamin
+$persen_laki = $jumlah_siswa > 0 ? round(($jml_laki / $jumlah_siswa) * 100, 1) : 0;
+$persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) * 100, 1) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -304,75 +321,76 @@ $siswa_terbaru = mysqli_query($koneksi, "SELECT * FROM siswa LIMIT 5");
                         </div>
                     </div>
 
-                    <!-- Recent Students Table Preview -->
+                    <!-- Row Grafik Banyaknya Siswa -->
                     <div class="row">
-                        <div class="col-12">
-                            <div class="card shadow mb-4">
+
+                        <!-- Bar Chart Banyaknya Siswa -->
+                        <div class="col-xl-8 col-lg-7 mb-4">
+                            <div class="card shadow mb-4 h-100">
                                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                                     <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-list mr-2"></i>Daftar Siswa Terbaru
+                                        <i class="fas fa-chart-bar mr-2"></i>Grafik Banyaknya Siswa Berdasarkan Kategori
                                     </h6>
-                                    <a href="siswa/siswa.php" class="btn btn-sm btn-primary">
-                                        Lihat Semua Data Siswa &rarr;
-                                    </a>
+                                    <div class="badge badge-primary px-3 py-2" style="border-radius: 8px; font-weight: 700; font-size: 0.85rem;">
+                                        Total: <?= $jumlah_siswa ?> Siswa
+                                    </div>
                                 </div>
                                 <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Nama Siswa</th>
-                                                    <th>NISN</th>
-                                                    <th>Email</th>
-                                                    <th>Jenis Kelamin</th>
-                                                    <th class="text-center" width="130">Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php
-                                                if ($siswa_terbaru && mysqli_num_rows($siswa_terbaru) > 0) {
-                                                    $no = 1;
-                                                    while ($s = mysqli_fetch_array($siswa_terbaru)) {
-                                                        $id_val = isset($s['id']) ? $s['id'] : (isset($s['id_siswa']) ? $s['id_siswa'] : (isset($s['nisn']) ? $s['nisn'] : ''));
-                                                ?>
-                                                <tr>
-                                                    <td class="text-center font-weight-bold text-muted"><?= $no++ ?></td>
-                                                    <td class="font-weight-bold text-gray-900"><?= htmlspecialchars($s['nama']) ?></td>
-                                                    <td><code><?= htmlspecialchars($s['nisn']) ?></code></td>
-                                                    <td><?= htmlspecialchars($s['email']) ?></td>
-                                                    <td>
-                                                        <?php if (isset($s['jk']) && ($s['jk'] == 'Laki-laki' || $s['jk'] == 'L')): ?>
-                                                            <span class="badge-custom badge-laki"><i class="fas fa-mars"></i> Laki-laki</span>
-                                                        <?php else: ?>
-                                                            <span class="badge-custom badge-perempuan"><i class="fas fa-venus"></i> Perempuan</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <a href="siswa/editsiswa.php?id=<?= urlencode($id_val) ?>" class="btn-action btn-edit" title="Edit Siswa">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <a href="siswa/siswa.php" class="btn-action btn-delete" title="Kelola di Halaman Siswa">
-                                                            <i class="fas fa-trash"></i>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                <?php
-                                                    }
-                                                } else {
-                                                ?>
-                                                <tr>
-                                                    <td colspan="6" class="text-center text-muted py-4">
-                                                        <i class="fas fa-info-circle mr-1"></i> Belum ada data siswa.
-                                                    </td>
-                                                </tr>
-                                                <?php } ?>
-                                            </tbody>
-                                        </table>
+                                    <div class="chart-bar" style="position: relative; height: 310px;">
+                                        <canvas id="siswaBarChart"></canvas>
+                                    </div>
+                                    <hr>
+                                    <div class="row text-center pt-2">
+                                        <div class="col-4 border-right">
+                                            <small class="text-muted d-block font-weight-bold">Siswa Laki-laki</small>
+                                            <span class="font-weight-bold text-primary h5"><?= $jml_laki ?></span>
+                                            <span class="text-muted small"> (<?= $persen_laki ?>%)</span>
+                                        </div>
+                                        <div class="col-4 border-right">
+                                            <small class="text-muted d-block font-weight-bold">Siswa Perempuan</small>
+                                            <span class="font-weight-bold text-danger h5"><?= $jml_perempuan ?></span>
+                                            <span class="text-muted small"> (<?= $persen_perempuan ?>%)</span>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block font-weight-bold">Total Terdaftar</small>
+                                            <span class="font-weight-bold text-success h5"><?= $jumlah_siswa ?></span>
+                                            <span class="text-muted small"> Siswa</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Donut Chart Proporsi Siswa -->
+                        <div class="col-xl-4 col-lg-5 mb-4">
+                            <div class="card shadow mb-4 h-100">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-chart-pie mr-2"></i>Komposisi Gender Siswa
+                                    </h6>
+                                    <a href="siswa/siswa.php" class="btn btn-sm btn-primary" style="padding: 4px 10px; font-size: 0.8rem;">
+                                        Kelola Siswa &rarr;
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-pie pt-2 pb-2" style="position: relative; height: 240px;">
+                                        <canvas id="siswaPieChart"></canvas>
+                                    </div>
+                                    <div class="mt-4 text-center small font-weight-bold">
+                                        <span class="mr-3 d-inline-block mb-2">
+                                            <i class="fas fa-circle mr-1" style="color: #4f46e5;"></i> Laki-laki: <strong><?= $jml_laki ?></strong> (<?= $persen_laki ?>%)
+                                        </span>
+                                        <span class="d-inline-block mb-2">
+                                            <i class="fas fa-circle mr-1" style="color: #f43f5e;"></i> Perempuan: <strong><?= $jml_perempuan ?></strong> (<?= $persen_perempuan ?>%)
+                                        </span>
+                                    </div>
+                                    <div class="alert alert-light border mt-3 mb-0 text-center py-2" style="border-radius: 10px; font-size: 0.85rem;">
+                                        <i class="fas fa-users text-primary mr-1"></i> Rasio gender: <strong><?= $jml_perempuan > 0 ? round(($jml_laki / max(1, $jml_perempuan)), 1) . ' : 1' : ($jml_laki > 0 ? '100% L' : '0') ?></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>
@@ -406,6 +424,123 @@ $siswa_terbaru = mysqli_query($koneksi, "SELECT * FROM siswa LIMIT 5");
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
     <script src="js/sb-admin-2.min.js"></script>
+    <script src="vendor/chart.js/Chart.min.js"></script>
+
+    <!-- Inisialisasi Grafik Banyaknya Siswa -->
+    <script>
+        // Set font default
+        Chart.defaults.global.defaultFontFamily = "'Plus Jakarta Sans', -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        Chart.defaults.global.defaultFontColor = '#64748b';
+
+        // 1. Bar Chart: Banyaknya Siswa
+        var ctxBar = document.getElementById("siswaBarChart");
+        if (ctxBar) {
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ["Laki-laki", "Perempuan", "Total Siswa"],
+                    datasets: [{
+                        label: "Banyaknya Siswa",
+                        backgroundColor: ['#4f46e5', '#f43f5e', '#10b981'],
+                        hoverBackgroundColor: ['#4338ca', '#e11d48', '#059669'],
+                        borderColor: ['#4f46e5', '#f43f5e', '#10b981'],
+                        borderWidth: 1,
+                        data: [<?= $jml_laki ?>, <?= $jml_perempuan ?>, <?= $jumlah_siswa ?>],
+                        maxBarThickness: 60
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    layout: {
+                        padding: { left: 10, right: 20, top: 20, bottom: 0 }
+                    },
+                    scales: {
+                        xAxes: [{
+                            gridLines: { display: false, drawBorder: false },
+                            ticks: { fontStyle: '600', fontColor: '#475569' }
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                min: 0,
+                                suggestedMax: <?= max(5, $jumlah_siswa + 2) ?>,
+                                padding: 10,
+                                precision: 0,
+                                callback: function(value) { return value + ' org'; }
+                            },
+                            gridLines: {
+                                color: "rgba(226, 232, 240, 0.7)",
+                                zeroLineColor: "rgba(226, 232, 240, 0.7)",
+                                drawBorder: false,
+                                borderDash: [3, 3],
+                                zeroLineBorderDash: [3, 3]
+                            }
+                        }]
+                    },
+                    legend: { display: false },
+                    tooltips: {
+                        backgroundColor: "#ffffff",
+                        titleFontColor: "#1e293b",
+                        bodyFontColor: "#475569",
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        xPadding: 14,
+                        yPadding: 12,
+                        displayColors: true,
+                        caretPadding: 8,
+                        callbacks: {
+                            label: function(tooltipItem, chart) {
+                                return ' ' + tooltipItem.yLabel + ' Siswa';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Donut Chart: Komposisi Jenis Kelamin Siswa
+        var ctxPie = document.getElementById("siswaPieChart");
+        if (ctxPie) {
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ["Laki-laki", "Perempuan"],
+                    datasets: [{
+                        data: [<?= $jml_laki ?>, <?= $jml_perempuan ?>],
+                        backgroundColor: ['#4f46e5', '#f43f5e'],
+                        hoverBackgroundColor: ['#4338ca', '#e11d48'],
+                        hoverBorderColor: "#ffffff",
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    tooltips: {
+                        backgroundColor: "#ffffff",
+                        titleFontColor: "#1e293b",
+                        bodyFontColor: "#475569",
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        xPadding: 14,
+                        yPadding: 12,
+                        caretPadding: 8,
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                var dataset = data.datasets[tooltipItem.datasetIndex];
+                                var total = dataset.data.reduce(function(prev, curr) { return prev + curr; }, 0);
+                                var value = dataset.data[tooltipItem.index];
+                                var percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                return ' ' + data.labels[tooltipItem.index] + ': ' + value + ' Siswa (' + percentage + '%)';
+                            }
+                        }
+                    },
+                    legend: { display: false },
+                    cutoutPercentage: 72
+                }
+            });
+        }
+    </script>
 
 </body>
 

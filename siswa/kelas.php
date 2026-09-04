@@ -4,6 +4,15 @@ include '../db.php';
 // Ambil data kelas tanpa hardcode kolom order
 $data = mysqli_query($koneksi, "SELECT * FROM kelas");
 $total_kelas = $data ? mysqli_num_rows($data) : 0;
+
+// Hitung jumlah siswa per kelas
+$siswa_count_map = [];
+$q_counts = mysqli_query($koneksi, "SELECT kelas, COUNT(*) as total FROM siswa GROUP BY kelas");
+if ($q_counts) {
+    while ($rc = mysqli_fetch_assoc($q_counts)) {
+        $siswa_count_map[$rc['kelas']] = (int)$rc['total'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -182,8 +191,8 @@ $total_kelas = $data ? mysqli_num_rows($data) : 0;
                                             <th>Nama Kelas</th>
                                             <th>Jurusan</th>
                                             <th>Wali Kelas</th>
-                                            <th>Ruangan</th>
-                                            <th class="text-center" width="120">Aksi</th>
+                                            <th class="text-center">Daftar Siswa</th>
+                                            <th class="text-center" width="100">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -192,6 +201,10 @@ $total_kelas = $data ? mysqli_num_rows($data) : 0;
                                         if ($data && mysqli_num_rows($data) > 0) {
                                             while ($k = mysqli_fetch_array($data)) {
                                                 $id_val = isset($k['id']) ? $k['id'] : (isset($k['id_kelas']) ? $k['id_kelas'] : (isset($k['nama']) ? $k['nama'] : ''));
+                                        ?>
+                                        <?php
+                                            $nama_kelas = $k['nama'];
+                                            $jml_siswa  = isset($siswa_count_map[$nama_kelas]) ? $siswa_count_map[$nama_kelas] : 0;
                                         ?>
                                         <tr>
                                             <td class="text-center font-weight-bold text-muted"><?= $i++ ?></td>
@@ -209,11 +222,20 @@ $total_kelas = $data ? mysqli_num_rows($data) : 0;
                                                 <i class="fas fa-user-tie text-muted mr-1"></i>
                                                 <?= htmlspecialchars($k['wali_kelas']) ?>
                                             </td>
-                                            <td>
-                                                <span class="badge-custom badge-ruangan">
-                                                    <i class="fas fa-map-marker-alt"></i>
-                                                    <?= htmlspecialchars($k['ruangan']) ?>
-                                                </span>
+                                            <td class="text-center">
+                                                <a href="siswa.php?kelas=<?= urlencode($k['nama']) ?>" title="Lihat Daftar Siswa Kelas <?= htmlspecialchars($k['nama']) ?>" style="text-decoration: none;">
+                                                    <?php if ($jml_siswa > 0): ?>
+                                                        <span style="display: inline-flex; align-items: center; gap: 6px; background: #e0e7ff; color: #4338ca; font-weight: 700; font-size: 0.85rem; padding: 5px 14px; border-radius: 20px; border: 1.5px solid #c7d2fe; transition: all .2s;">
+                                                            <i class="fas fa-users"></i>
+                                                            <?= $jml_siswa ?> Siswa
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span style="display: inline-flex; align-items: center; gap: 6px; background: #f1f5f9; color: #94a3b8; font-weight: 600; font-size: 0.82rem; padding: 5px 12px; border-radius: 20px; border: 1.5px solid #e2e8f0;">
+                                                            <i class="fas fa-user-slash"></i>
+                                                            Belum Ada
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </a>
                                             </td>
                                             <td class="text-center">
                                                 <a href="editkelas.php?id=<?= urlencode($id_val) ?>" class="btn-action btn-edit" title="Edit Data Kelas">

@@ -8,9 +8,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nama       = mysqli_real_escape_string($koneksi, trim($_POST['nama']));
     $jurusan    = mysqli_real_escape_string($koneksi, trim($_POST['jurusan']));
     $wali_kelas = mysqli_real_escape_string($koneksi, trim($_POST['wali_kelas']));
-    $ruangan    = mysqli_real_escape_string($koneksi, trim($_POST['ruangan']));
 
-    $query  = "INSERT INTO kelas (nama, jurusan, wali_kelas, ruangan) VALUES ('$nama', '$jurusan', '$wali_kelas', '$ruangan')";
+    $query  = "INSERT INTO kelas (nama, jurusan, wali_kelas, ruangan) VALUES ('$nama', '$jurusan', '$wali_kelas', '')";
     $result = mysqli_query($koneksi, $query);
 
     if ($result) {
@@ -168,18 +167,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     </div>
 
                                     <div class="row">
-                                        <div class="col-md-6 form-group mb-3">
+                                        <div class="col-md-12 form-group mb-3">
                                             <label for="wali_kelas">
                                                 <i class="fas fa-user-tie text-success mr-1"></i> Nama Wali Kelas <span class="text-danger">*</span>
                                             </label>
                                             <input type="text" id="wali_kelas" name="wali_kelas" class="form-control" placeholder="Nama Guru Wali Kelas" required>
-                                        </div>
-
-                                        <div class="col-md-6 form-group mb-3">
-                                            <label for="ruangan">
-                                                <i class="fas fa-map-marker-alt text-success mr-1"></i> Ruangan / Lab <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" id="ruangan" name="ruangan" class="form-control" placeholder="Contoh: Ruang 101 / Lab Komputer" required>
                                         </div>
                                     </div>
 
