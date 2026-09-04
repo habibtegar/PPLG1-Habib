@@ -374,7 +374,7 @@ $total_siswa = $data ? mysqli_num_rows($data) : 0;
                     row.show();
                     visibleCount++;
                 } else {
-                    row.hide();
+                    
                 }
             });
 
