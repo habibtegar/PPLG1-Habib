@@ -44,3 +44,4 @@ if (!empty($id_param)) {
 
 header("Location: siswa.php");
 exit;
+?>
