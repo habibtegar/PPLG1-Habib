@@ -1,5 +1,6 @@
 <?php
-include '../db.php';
+/** @var mysqli $koneksi */
+require_once '../db.php';
 
 // Ambil daftar jurusan dari database
 $list_jurusan = mysqli_query($koneksi, "SELECT * FROM jurusan ORDER BY nama ASC");

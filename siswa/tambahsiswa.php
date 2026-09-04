@@ -1,5 +1,6 @@
 <?php
-include '../db.php';
+/** @var mysqli $koneksi */
+require_once '../db.php';
 
 // Ambil daftar kelas untuk dropdown
 $daftar_kelas = mysqli_query($koneksi, "SELECT * FROM kelas ORDER BY nama ASC");

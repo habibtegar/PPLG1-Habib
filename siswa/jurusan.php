@@ -1,5 +1,6 @@
 <?php
-include '../db.php';
+/** @var mysqli $koneksi */
+require_once '../db.php';
 
 // Ambil data jurusan tanpa hardcode kolom order
 $data = mysqli_query($koneksi, "SELECT * FROM jurusan");

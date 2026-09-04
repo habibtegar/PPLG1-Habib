@@ -1,5 +1,6 @@
 <?php
-include '../db.php';
+/** @var mysqli $koneksi */
+require_once '../db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nama  = mysqli_real_escape_string($koneksi, trim($_POST['nama']));

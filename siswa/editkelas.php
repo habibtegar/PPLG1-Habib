@@ -1,5 +1,6 @@
 <?php
-include '../db.php';
+/** @var mysqli $koneksi */
+require_once '../db.php';
 
 $id_param = isset($_GET['id']) ? mysqli_real_escape_string($koneksi, trim($_GET['id'])) : '';
 if (empty($id_param)) {
