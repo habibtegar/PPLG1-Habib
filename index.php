@@ -1,47 +1,80 @@
 <?php
-include 'db.php';
+/**
+ * ==============================================================================
+ * SISTEM INFORMASI AKADEMIK - DASHBOARD UTAMA
+ * Bagian 1: Data Logic & Database Layer (PHP Native PDO + Prepared Statements)
+ * ==============================================================================
+ */
 
-$jumlah_siswa   = 0;
-$jumlah_kelas   = 0;
-$jumlah_jurusan = 0;
+// 1. Konfigurasi Kredensial Database
+$db_host = 'localhost';
+$db_port = '3306';
+$db_name = 'akademik';
+$db_user = 'root';
+$db_pass = '';
 
-$q_siswa = mysqli_query($koneksi, "SELECT COUNT(*) FROM siswa");
-if ($q_siswa) {
-    $row = mysqli_fetch_row($q_siswa);
-    $jumlah_siswa = $row ? $row[0] : 0;
-}
+// Inisialisasi variabel statistik default (Fail-safe defaults)
+$jumlah_siswa     = 0;
+$jumlah_kelas     = 0;
+$jumlah_jurusan   = 0;
+$jml_laki         = 0;
+$jml_perempuan    = 0;
+$persen_laki      = 0;
+$persen_perempuan = 0;
+$db_error         = null;
 
-$q_kelas = mysqli_query($koneksi, "SELECT COUNT(*) FROM kelas");
-if ($q_kelas) {
-    $row = mysqli_fetch_row($q_kelas);
-    $jumlah_kelas = $row ? $row[0] : 0;
-}
+try {
+    // 2. Inisialisasi Koneksi PDO dengan Pengaturan Aman
+    $dsn = "mysql:host={$db_host};port={$db_port};dbname={$db_name};charset=utf8mb4";
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Lempar Exception jika terjadi kegagalan
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Ambil hasil dalam bentuk associative array
+        PDO::ATTR_EMULATE_PREPARES   => false,                  // Gunakan prepared statements native dari engine MySQL
+        PDO::ATTR_TIMEOUT            => 5,                      // Batas waktu timeout 5 detik
+    ];
+    $pdo = new PDO($dsn, $db_user, $db_pass, $options);
 
-$q_jurusan = mysqli_query($koneksi, "SELECT COUNT(*) FROM jurusan");
-if ($q_jurusan) {
-    $row = mysqli_fetch_row($q_jurusan);
-    $jumlah_jurusan = $row ? (int)$row[0] : 0;
-}
+    // 3. Query Total Data Siswa (Prepared Statement)
+    $stmt_siswa = $pdo->prepare("SELECT COUNT(*) AS total FROM siswa");
+    $stmt_siswa->execute();
+    $jumlah_siswa = (int) $stmt_siswa->fetchColumn();
 
-// Hitung data statistik banyaknya siswa untuk grafik
-$jml_laki = 0;
-$jml_perempuan = 0;
+    // 4. Query Total Data Kelas (Prepared Statement)
+    $stmt_kelas = $pdo->prepare("SELECT COUNT(*) AS total FROM kelas");
+    $stmt_kelas->execute();
+    $jumlah_kelas = (int) $stmt_kelas->fetchColumn();
 
-$q_jk = mysqli_query($koneksi, "SELECT jk, COUNT(*) as total FROM siswa GROUP BY jk");
-if ($q_jk) {
-    while ($row_jk = mysqli_fetch_assoc($q_jk)) {
-        $jk_lower = strtolower(trim($row_jk['jk']));
-        if ($jk_lower == 'laki-laki' || $jk_lower == 'l') {
-            $jml_laki += (int)$row_jk['total'];
-        } else if ($jk_lower == 'perempuan' || $jk_lower == 'p') {
-            $jml_perempuan += (int)$row_jk['total'];
+    // 5. Query Total Data Jurusan (Prepared Statement)
+    $stmt_jurusan = $pdo->prepare("SELECT COUNT(*) AS total FROM jurusan");
+    $stmt_jurusan->execute();
+    $jumlah_jurusan = (int) $stmt_jurusan->fetchColumn();
+
+    // 6. Query Hitungan Gender Siswa (Prepared Statement)
+    $stmt_gender = $pdo->prepare("SELECT jk, COUNT(*) AS total FROM siswa GROUP BY jk");
+    $stmt_gender->execute();
+    $gender_rows = $stmt_gender->fetchAll();
+
+    // Olah data agregasi gender dengan sanitasi & normalisasi
+    foreach ($gender_rows as $row) {
+        $jk_val = strtolower(trim($row['jk'] ?? ''));
+        if (in_array($jk_val, ['laki-laki', 'l', 'pria', 'laki'])) {
+            $jml_laki += (int) $row['total'];
+        } elseif (in_array($jk_val, ['perempuan', 'p', 'wanita'])) {
+            $jml_perempuan += (int) $row['total'];
         }
     }
-}
 
-// Persentase jenis kelamin
-$persen_laki = $jumlah_siswa > 0 ? round(($jml_laki / $jumlah_siswa) * 100, 1) : 0;
-$persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) * 100, 1) : 0;
+    // 7. Kalkulasi Persentase Gender (Dengan perlindungan pembagian nol)
+    if ($jumlah_siswa > 0) {
+        $persen_laki      = round(($jml_laki / $jumlah_siswa) * 100, 1);
+        $persen_perempuan = round(($jml_perempuan / $jumlah_siswa) * 100, 1);
+    }
+
+} catch (PDOException $e) {
+    // Penanganan error aman: Log pesan error teknis ke server tanpa mengekspos kredensial ke publik
+    error_log("[Database Error] " . $e->getMessage());
+    $db_error = "Sistem sedang mengalami kendala saat menghubungkan ke database. Pastikan MySQL di Laragon/XAMPP aktif dan database '{$db_name}' tersedia.";
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -58,7 +91,7 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
 
     <!-- Styles -->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
-    <link href="css/custom.css" rel="stylesheet">
+    <link href="css/custom.css?v=2.2" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -67,60 +100,7 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
     <div id="wrapper">
 
         <!-- Sidebar -->
-        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-
-            <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
-                <div class="sidebar-brand-icon rotate-n-15">
-                    <i class="fas fa-graduation-cap fa-lg"></i>
-                </div>
-                <div class="sidebar-brand-text mx-3">AKADEMIK <sup>PPLG 1</sup></div>
-            </a>
-
-            <!-- Divider -->
-            <hr class="sidebar-divider my-0">
-
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item active">
-                <a class="nav-link" href="index.php">
-                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-
-            <!-- Divider -->
-            <hr class="sidebar-divider">
-
-            <div class="sidebar-heading text-light font-weight-bold" style="font-size: 0.7rem; opacity: 0.8;">
-                MANAJEMEN DATA
-            </div>
-
-            <!-- Nav Item - Pages Collapse Menu -->
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                    aria-expanded="true" aria-controls="collapseTwo">
-                    <i class="fas fa-fw fa-database"></i>
-                    <span>Bank Data</span>
-                </a>
-                <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" href="siswa/siswa.php"><i class="fas fa-user-graduate mr-2 text-primary"></i>Data Siswa</a>
-                        <a class="collapse-item" href="siswa/kelas.php"><i class="fas fa-chalkboard-teacher mr-2 text-success"></i>Data Kelas</a>
-                        <a class="collapse-item" href="siswa/jurusan.php"><i class="fas fa-school mr-2 text-info"></i>Data Jurusan</a>
-                    </div>
-                </div>
-            </li>
-
-            <!-- Divider -->
-            <hr class="sidebar-divider d-none d-md-block">
-
-            <!-- Sidebar Toggler (Sidebar) -->
-            <div class="text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle"></button>
-            </div>
-
-        </ul>
-        <!-- End of Sidebar -->
+        <?php include_once __DIR__ . '/components/sidebar.php'; ?>
 
         <!-- Content Wrapper -->
         <div id="content-wrapper" class="d-flex flex-column">
@@ -180,6 +160,22 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
 
+                    <?php if (!empty($db_error)): ?>
+                        <!-- Alert Banner Penanganan Error Koneksi Database -->
+                        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert" style="border-radius: 12px; background: #fff1f2; color: #be123c; border-left: 5px solid #f43f5e !important;">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle fa-2x mr-3 text-danger"></i>
+                                <div>
+                                    <strong class="d-block font-weight-bold" style="font-size: 0.95rem;">Peringatan Koneksi Basis Data</strong>
+                                    <span style="font-size: 0.88rem;"><?= htmlspecialchars($db_error, ENT_QUOTES, 'UTF-8') ?></span>
+                                </div>
+                            </div>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <div>
@@ -189,12 +185,12 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
                     </div>
 
                     <!-- Stat Cards Row -->
-                    <div class="row">
+                    <div class="row dashboard-section mb-4">
 
                         <!-- Card Siswa -->
-                        <div class="col-xl-4 col-md-6 mb-4">
+                        <div class="col-xl-4 col-md-6 mb-3 mb-xl-0">
                             <a href="siswa/siswa.php" class="text-decoration-none">
-                                <div class="card stat-card border-primary h-100 py-3">
+                                <div class="card stat-card border-primary h-100">
                                     <div class="card-body">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
@@ -218,9 +214,9 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
                         </div>
 
                         <!-- Card Kelas -->
-                        <div class="col-xl-4 col-md-6 mb-4">
+                        <div class="col-xl-4 col-md-6 mb-3 mb-xl-0">
                             <a href="siswa/kelas.php" class="text-decoration-none">
-                                <div class="card stat-card border-success h-100 py-3">
+                                <div class="card stat-card border-success h-100">
                                     <div class="card-body">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
@@ -244,9 +240,9 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
                         </div>
 
                         <!-- Card Jurusan -->
-                        <div class="col-xl-4 col-md-6 mb-4">
+                        <div class="col-xl-4 col-md-12">
                             <a href="siswa/jurusan.php" class="text-decoration-none">
-                                <div class="card stat-card border-info h-100 py-3">
+                                <div class="card stat-card border-info h-100">
                                     <div class="card-body">
                                         <div class="row no-gutters align-items-center">
                                             <div class="col mr-2">
@@ -272,17 +268,18 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
                     </div>
 
                     <!-- Quick Actions Row -->
-                    <div class="row mb-4">
+                    <div class="row dashboard-section mb-4">
                         <div class="col-12">
                             <div class="card shadow-sm">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <span class="font-weight-bold text-gray-800">
+                                <div class="card-header py-3 px-3 px-sm-4 d-flex align-items-center justify-content-between flex-wrap card-header-action" style="gap: 10px 16px;">
+                                    <h6 class="m-0 font-weight-bold text-gray-800 card-header-title d-flex align-items-center">
                                         <i class="fas fa-bolt text-warning mr-2"></i>Aksi Cepat Tambah Data
-                                    </span>
+                                    </h6>
+                                    <span class="text-muted small">Pintasan formulir data master</span>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="col-lg-4 col-md-6 col-12 mb-3 mb-lg-0">
                                             <a href="siswa/tambahsiswa.php" class="quick-action-card">
                                                 <div class="quick-action-icon qa-blue">
                                                     <i class="fas fa-user-plus"></i>
@@ -293,7 +290,7 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
                                                 </div>
                                             </a>
                                         </div>
-                                        <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="col-lg-4 col-md-6 col-12 mb-3 mb-lg-0">
                                             <a href="siswa/tambahkelas.php" class="quick-action-card">
                                                 <div class="quick-action-icon qa-green">
                                                     <i class="fas fa-plus-circle"></i>
@@ -304,7 +301,7 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
                                                 </div>
                                             </a>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-lg-4 col-md-12 col-12">
                                             <a href="siswa/tambahjurusan.php" class="quick-action-card">
                                                 <div class="quick-action-icon qa-cyan">
                                                     <i class="fas fa-folder-plus"></i>
@@ -322,25 +319,25 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
                     </div>
 
                     <!-- Row Grafik Banyaknya Siswa -->
-                    <div class="row">
+                    <div class="row dashboard-section mb-4">
 
                         <!-- Bar Chart Banyaknya Siswa -->
-                        <div class="col-xl-8 col-lg-7 mb-4">
-                            <div class="card shadow mb-4 h-100">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-chart-bar mr-2"></i>Grafik Banyaknya Siswa Berdasarkan Kategori
+                        <div class="col-xl-8 col-lg-7 mb-4 mb-lg-0">
+                            <div class="card shadow h-100">
+                                <div class="card-header chart-card-header">
+                                    <h6 class="card-header-title">
+                                        <i class="fas fa-chart-bar mr-2 text-primary"></i>Grafik Banyaknya Siswa Berdasarkan Kategori
                                     </h6>
-                                    <div class="badge badge-primary px-3 py-2" style="border-radius: 8px; font-weight: 700; font-size: 0.85rem;">
+                                    <div class="header-pill-badge">
                                         Total: <?= $jumlah_siswa ?> Siswa
                                     </div>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body d-flex flex-column justify-content-between">
                                     <div class="chart-bar" style="position: relative; height: 310px;">
                                         <canvas id="siswaBarChart"></canvas>
                                     </div>
-                                    <hr>
-                                    <div class="row text-center pt-2">
+                                    <hr class="my-3">
+                                    <div class="row text-center pt-1">
                                         <div class="col-4 border-right">
                                             <small class="text-muted d-block font-weight-bold">Siswa Laki-laki</small>
                                             <span class="font-weight-bold text-primary h5"><?= $jml_laki ?></span>
@@ -362,21 +359,22 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
                         </div>
 
                         <!-- Donut Chart Proporsi Siswa -->
-                        <div class="col-xl-4 col-lg-5 mb-4">
-                            <div class="card shadow mb-4 h-100">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-chart-pie mr-2"></i>Komposisi Gender Siswa
+                        <div class="col-xl-4 col-lg-5">
+                            <div class="card shadow h-100">
+                                <div class="card-header chart-card-header">
+                                    <h6 class="card-header-title">
+                                        <i class="fas fa-chart-pie mr-2 text-primary"></i>Komposisi Gender Siswa
                                     </h6>
-                                    <a href="siswa/siswa.php" class="btn btn-sm btn-primary" style="padding: 4px 10px; font-size: 0.8rem;">
-                                        Kelola Siswa &rarr;
+                                    <a href="siswa/siswa.php" class="header-action-btn">
+                                        <span>Kelola Siswa</span>
+                                        <i class="fas fa-arrow-right ml-1"></i>
                                     </a>
                                 </div>
-                                <div class="card-body">
-                                    <div class="chart-pie pt-2 pb-2" style="position: relative; height: 240px;">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div class="chart-pie pt-2 pb-2" style="position: relative; height: 230px;">
                                         <canvas id="siswaPieChart"></canvas>
                                     </div>
-                                    <div class="mt-4 text-center small font-weight-bold">
+                                    <div class="mt-3 text-center small font-weight-bold">
                                         <span class="mr-3 d-inline-block mb-2">
                                             <i class="fas fa-circle mr-1" style="color: #4f46e5;"></i> Laki-laki: <strong><?= $jml_laki ?></strong> (<?= $persen_laki ?>%)
                                         </span>
@@ -403,7 +401,7 @@ $persen_perempuan = $jumlah_siswa > 0 ? round(($jml_perempuan / $jumlah_siswa) *
             <footer class="sticky-footer bg-white mt-4 border-top">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto font-weight-bold text-gray-600">
-                        <span>Copyright &copy; <?= date('Y') ?> - PPLG 1 SMKN 1 CIOMAS</span>
+                        <span>Copyright © 2026 &copy; <?= date('Y') ?> - PPLG 1 SMKN 1 Ciomas. All rights reserved</span>
                     </div>
                 </div>
             </footer>
